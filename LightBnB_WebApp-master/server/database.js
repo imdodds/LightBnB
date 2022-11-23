@@ -22,7 +22,6 @@ const getUserWithEmail = (email) => {
   return pool
     .query(`SELECT * FROM users WHERE users.email = $1`, [email])
     .then((result) => {
-      console.log(result.rows[0]);
       return result.rows[0];
     })
     .catch((err) => {
@@ -41,7 +40,6 @@ const getUserWithId = (id) => {
   return pool
   .query(`SELECT * FROM users WHERE users.id = $1`, [id])
   .then((result) => {
-    console.log(result.rows[0]);
     return result.rows[0];
   })
   .catch((err) => {
@@ -61,7 +59,6 @@ const addUser =  (user) => {
   return pool
   .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;`, [user.name, user.email, user.password])
   .then((result) => {
-    console.log(result.rows[0]);
     return result.rows[0];
   })
   .catch((err) => {
@@ -88,7 +85,6 @@ const getAllReservations = (guest_id, limit = 10) => {
     ORDER BY reservations.start_date
     LIMIT $2`, [guest_id, limit])
     .then((result) => {
-      console.log(result.rows);
       return result.rows;
     })
     .catch((err) => {
@@ -147,20 +143,17 @@ const getAllProperties = (options, limit = 10) => {
     queryParams.push(`${options.maximum_price_per_night}`);
     if (!options.city && !options.owner_id && !options.minimum_price_per_night) queryString += `WHERE `;
     queryString += `cost_per_night >= $${queryParams.length} `;
-    if (options.minimum_rating) {
-      queryString += ` AND `;
-    }
   }
+
+  queryString += `GROUP BY properties.id `
 
   if (options.minimum_rating) {
     queryParams.push(`${options.minimum_rating}`);
-    if (!options.city && !options.owner_id && !options.minimum_price_per_night && !options.maximum_price_per_night) queryString += `WHERE `;
-    queryString += `minimum_rating >= $${queryParams.length} `;
+    queryString += `HAVING AVG(property_reviews.rating) >= $${queryParams.length} `;
   }
 
   queryParams.push(limit);
   queryString += `
-  GROUP BY properties.id
   ORDER BY cost_per_night
   LIMIT $${queryParams.length};
   `;
@@ -185,7 +178,6 @@ const addProperty = (property) => {
   `, 
   [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms])
   .then((result) => {
-    console.log(result.rows[0]);
     return result.rows[0];
   })
   .catch((err) => {
